@@ -79,11 +79,13 @@ def upload_image():
         # 在这里，您可以进行图像处理或其他操作
         # 返回处理后的图像
         # 读取图像数据并转为Base64编码
+        ext_name = os.path.splitext(res_filename)[-1][1:]
+        ext_name = ext_name.lower()
         with open(os.path.join(outputs,res_filename), 'rb') as f:
             img_data = base64.b64encode(f.read()).decode('utf-8')
 
         # 返回Base64编码的图像数据
-        return jsonify({"image": img_data})
+        return jsonify({"image": "data:image/"+ext_name+";base64"+img_data})
         # response = send_file(os.path.join(outputs, res_filename), mimetype='image/jpeg')
 
         # # 删除图像文件
