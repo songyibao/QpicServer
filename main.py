@@ -11,6 +11,8 @@ import Final2x_core as Fin
 import os
 import time
 import cv2
+from PIL import Image
+import io
 
 app = Flask(__name__)
 
@@ -34,14 +36,14 @@ def myupscale(filename):
     inputs = app.config['UPLOAD_FOLDER']
     outputs = app.config['OUTPUT_FOLDER']
     config = Fin.SRCONFIG()
-    config.inputpath = [os.path.join(inputs,filename)]  # init log percentage
+    config.inputpath = [os.path.join(inputs, filename)]  # init log percentage
     config.tta = True
     config.model = 'RealESRGAN-anime'
     config.modelnoise = -1
 
     sr = Fin.SRFactory.getSR()
     # RGB Mode, RGBA can refer Final2x_core.SR_queue
-    img = cv2.imread(os.path.join(inputs,filename), cv2.IMREAD_COLOR)
+    img = cv2.imread(os.path.join(inputs, filename), cv2.IMREAD_COLOR)
     img = sr.process(img)
     cv2.imwrite(os.path.join(outputs, filename), img)
     return filename
@@ -79,13 +81,12 @@ def upload_image():
         # 在这里，您可以进行图像处理或其他操作
         # 返回处理后的图像
         # 读取图像数据并转为Base64编码
-        ext_name = os.path.splitext(res_filename)[-1][1:]
-        ext_name = ext_name.lower()
-        with open(os.path.join(outputs,res_filename), 'rb') as f:
+        with open(os.path.join(outputs, res_filename), 'rb') as f:
             img_data = base64.b64encode(f.read()).decode('utf-8')
-
+        img = Image.open(os.path.join(outputs, res_filename))
+        ext_name = img.format.lower()
         # 返回Base64编码的图像数据
-        return jsonify({"image": "data:image/"+ext_name+";base64"+img_data})
+        return "data:image/" + ext_name + ";base64," + img_data
         # response = send_file(os.path.join(outputs, res_filename), mimetype='image/jpeg')
 
         # # 删除图像文件
@@ -96,4 +97,4 @@ def upload_image():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0", port=5000)
