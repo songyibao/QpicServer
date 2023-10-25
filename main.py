@@ -88,7 +88,8 @@ def upload_image(file, type):
         # 生成时间戳
         timestamp = int(time.time())
         # 保存上传的文件
-        filename = f"{timestamp}_{file.filename}"
+        # filename = f"{timestamp}_{file.filename}"
+        filename = f"{timestamp}"
         image_path = os.path.join(inputs, filename)
         file.save(image_path)
         res_filename = ""
