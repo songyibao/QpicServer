@@ -42,6 +42,7 @@ def myupscale(filename):
     inputs = app.config['UPLOAD_FOLDER']
     outputs = app.config['OUTPUT_FOLDER']
     config = Fin.SRCONFIG()
+    config.gpuid = 0
     config.inputpath = [os.path.join(inputs, filename)]  # init log percentage
     config.tta = True
     config.model = 'RealESRGAN-anime'
