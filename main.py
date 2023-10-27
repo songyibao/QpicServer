@@ -28,6 +28,7 @@ app.config['OUTPUT_FOLDER'] = 'outputs'
 
 def upscale(picPATH: List[str]) -> None:
     config = Fin.SRCONFIG()
+    config.gpuid = 0
     config.inputpath = picPATH  # init log percentage
     config.tta = True
     config.model = 'RealESRGAN-anime'
@@ -92,7 +93,7 @@ def upload_image(file, type):
         ext_name = os.path.splitext(file.filename)[-1]
         ext_name = ext_name.lower()
         filename = f"{timestamp}{ext_name}"
-        print(filename)
+        # print(filename)
         image_path = os.path.join(inputs, filename)
         file.save(image_path)
         res_filename = ""
