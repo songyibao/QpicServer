@@ -89,7 +89,10 @@ def upload_image(file, type):
         timestamp = int(time.time())
         # 保存上传的文件
         # filename = f"{timestamp}_{file.filename}"
-        filename = f"{timestamp}"
+        ext_name = os.path.splitext(file.filename)[-1]
+        ext_name = ext_name.lower()
+        filename = f"{timestamp}{ext_name}"
+        print(filename)
         image_path = os.path.join(inputs, filename)
         file.save(image_path)
         res_filename = ""
