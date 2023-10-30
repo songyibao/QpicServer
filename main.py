@@ -1,29 +1,26 @@
 # This is a sample Python script.
 import base64
+import sys
 
 import torch
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 
 from flask import Flask, request, send_file, jsonify
-# from flask.ext.restful import reqparse, abort, Api, Resource
 from typing import List, Union
 import Final2x_core as Fin
 import os
 import time
 import cv2
 from PIL import Image
-import io
-# -*- coding: utf-8 -*-
 
 from flask_restful import reqparse, Resource, Api
-from werkzeug.datastructures import FileStorage
+from style_transfer import transfer
 
 app = Flask(__name__)
 
 # 上传的图像文件将被保存在这个目录
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['OUTPUT_FOLDER'] = 'outputs'
+app.config['STYLE_UPLOAD_FOLDER'] = 'style_transfer/images'
 
 
 def upscale(picPATH: List[str]) -> None:
@@ -69,6 +66,12 @@ def pic2anime(filename):
     return filename
 
 
+def my_style_transfer(content_image_path, style_image_path, filename_only):
+    TS = transfer.NeuralStyleTransfer(content_image_path, style_image_path)
+    TS.start(filename_only)
+    return filename_only + '.jpg'
+
+
 # @app.route('/upload', methods=['POST'])
 def upload_image(file, type):
     inputs = app.config['UPLOAD_FOLDER']
@@ -102,7 +105,6 @@ def upload_image(file, type):
             res_filename = myupscale(filename)
         elif type == 2:
             res_filename = pic2anime(filename)
-
         # 现在您可以在img中访问图像数据，img_data中包含了图像的原始二进制数据
 
         # 在这里，您可以进行图像处理或其他操作
@@ -113,14 +115,60 @@ def upload_image(file, type):
         img = Image.open(os.path.join(outputs, res_filename))
         ext_name = img.format.lower()
         # 返回Base64编码的图像数据
-        return "data:image/" + ext_name + ";base64," + img_data
-        # response = send_file(os.path.join(outputs, res_filename), mimetype='image/jpeg')
+        # return "data:image/" + ext_name + ";base64," + img_data
+        response = "data:image/" + ext_name + ";base64," + img_data
 
-        # # 删除图像文件
-        # os.remove(os.path.join(inputs, filename))
-        # os.remove(os.path.join(outputs, res_filename))
+        # 删除图像文件
+        os.remove(image_path)
+        os.remove(os.path.join(outputs, res_filename))
 
-        # return response
+        return response
+
+
+def upload_two_images(files):
+    inputs = app.config['UPLOAD_FOLDER']
+    outputs = app.config['OUTPUT_FOLDER']
+    # if 'file' not in request.files:
+    #     return "No file part"
+    print(files)
+    if len(files) != 2:
+        return "Error files count"
+    # file = request.files['file']
+
+    if files[0].filename == '' or files[1].filename == '':
+        return "No selected file"
+
+    if files:
+        # 确保目录存在
+        if not os.path.exists(inputs):
+            os.makedirs(inputs)
+        if not os.path.exists(outputs):
+            os.makedirs(outputs)
+        # 生成时间戳
+        timestamp = int(time.time())
+        content_filename = f"{timestamp}_{files[0].filename}"
+        style_filename = f"{timestamp}_{files[1].filename}"
+        content_image_path = os.path.join(inputs, content_filename)
+        files[0].save(content_image_path)
+        style_image_path = os.path.join(inputs, style_filename)
+        files[1].save(style_image_path)
+        res_filename = my_style_transfer(content_image_path, style_image_path, str(timestamp))
+        # 返回处理后的图像
+        # 读取图像数据并转为Base64编码
+        with open(os.path.join(outputs, res_filename), 'rb') as f:
+            img_data = base64.b64encode(f.read()).decode('utf-8')
+        img = Image.open(os.path.join(outputs, res_filename))
+        ext_name = img.format.lower()
+        # 返回Base64编码的图像数据
+        # return "data:image/" + ext_name + ";base64," + img_data
+        response = "data:image/" + ext_name + ";base64," + img_data
+
+        # 删除图像文件
+        os.remove(content_image_path)
+        os.remove(style_image_path)
+        os.remove(os.path.join(outputs, res_filename))
+
+        return response
 
 
 class UploadImg(Resource):
@@ -142,7 +190,19 @@ class UploadImg(Resource):
         return {'data': image_base64_str}
 
 
+class UploadImgs(Resource):
+
+
+    def post(self):
+        img_files = request.files
+        img_arr = img_files.getlist('file')
+        image_base64_str = upload_two_images(img_arr)
+        return {'data': image_base64_str}
+
+
 if __name__ == '__main__':
     api = Api(app)
+    # id 1->超分辨率 2->图像转动漫 3->图像风格迁移
     api.add_resource(UploadImg, '/uploadImg/<int:id>')
+    api.add_resource(UploadImgs, '/uploadImg/styleTransfer')
     app.run(debug=True, host="0.0.0.0", port=5000)
