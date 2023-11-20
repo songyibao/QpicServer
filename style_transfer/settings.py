@@ -29,7 +29,7 @@ WIDTH = 300
 HEIGHT = 300
 
 # 训练epoch数
-EPOCHS = 20
+EPOCHS = 16
 # 每个epoch训练多少次
 STEPS_PER_EPOCH = 100
 # 学习率

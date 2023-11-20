@@ -114,6 +114,7 @@ def upload_image(file, type):
             img_data = base64.b64encode(f.read()).decode('utf-8')
         img = Image.open(os.path.join(outputs, res_filename))
         ext_name = img.format.lower()
+        del img
         # 返回Base64编码的图像数据
         # return "data:image/" + ext_name + ";base64," + img_data
         response = "data:image/" + ext_name + ";base64," + img_data
@@ -159,6 +160,8 @@ def upload_two_images(files):
             img_data = base64.b64encode(f.read()).decode('utf-8')
         img = Image.open(os.path.join(outputs, res_filename))
         ext_name = img.format.lower()
+        del img
+        del files
         # 返回Base64编码的图像数据
         # return "data:image/" + ext_name + ";base64," + img_data
         response = "data:image/" + ext_name + ";base64," + img_data
@@ -195,7 +198,9 @@ class UploadImgs(Resource):
 
     def post(self):
         img_files = request.files
-        img_arr = img_files.getlist('file')
+        print(img_files)
+        img_arr = img_files.getlist('file0')
+        img_arr = img_arr + img_files.getlist('file1')
         image_base64_str = upload_two_images(img_arr)
         return {'data': image_base64_str}
 
