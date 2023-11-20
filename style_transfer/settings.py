@@ -15,7 +15,7 @@ STYLE_LAYERS = {'block1_conv1': 0.2, 'block2_conv1': 0.2, 'block3_conv1': 0.2, '
 # 风格图片路径
 # STYLE_IMAGE_PATH = './images/style.png'
 # 生成图片的保存目录
-PROJECT_DIR = '/Users/songyibao/Documents/GitHub/QpicServer'
+PROJECT_DIR = '.'
 OUTPUT_DIR = PROJECT_DIR+'/outputs'
 
 # 内容loss总加权系数

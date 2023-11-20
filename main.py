@@ -1,18 +1,17 @@
 # This is a sample Python script.
 import base64
-import sys
-
+import tensorflow as tf
 import torch
 
-from flask import Flask, request, send_file, jsonify
-from typing import List, Union
+from flask import Flask, request
+from typing import List
 import Final2x_core as Fin
 import os
 import time
 import cv2
 from PIL import Image
 
-from flask_restful import reqparse, Resource, Api
+from flask_restful import Resource, Api
 from style_transfer import transfer
 
 app = Flask(__name__)
@@ -61,14 +60,15 @@ def pic2anime(filename):
     input_image = os.path.join(inputs, filename)
     img = Image.open(input_image).convert("RGB")
     out = face2paint(model, img)
-
     out.save(os.path.join(outputs, filename))
+    torch.cuda.empty_cache()
     return filename
 
 
 def my_style_transfer(content_image_path, style_image_path, filename_only):
     TS = transfer.NeuralStyleTransfer(content_image_path, style_image_path)
     TS.start(filename_only)
+    tf.keras.backend.clear_session()
     return filename_only + '.jpg'
 
 

@@ -5,6 +5,9 @@
 # @Desc    :
 import tensorflow as tf
 import style_transfer.settings as settings
+gpus = tf.config.list_physical_devices('GPU')
+for gpu in gpus:
+    tf.config.experimental.set_memory_growth(gpu, True)
 # 我们准备使用经典网络在imagenet数据集上的与训练权重，所以归一化时也要使用imagenet的平均值和标准差
 image_mean = tf.constant([0.485, 0.456, 0.406])
 image_std = tf.constant([0.299, 0.224, 0.225])
