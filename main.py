@@ -13,7 +13,7 @@ from PIL import Image
 
 from flask_restful import Resource, Api
 from style_transfer import transfer
-import restore
+import inference_codeformer
 
 app = Flask(__name__)
 
@@ -74,11 +74,10 @@ def my_style_transfer(content_image_path, style_image_path, filename_only):
 
 
 def face_restore(filename):
-    inputs = app.config['UPLOAD_FOLDER']
-    outputs = app.config['OUTPUT_FOLDER']
-    RS = restore.Restore
-    RS.do(output_path=os.path.join(outputs, filename), image_path=os.path.join(inputs, filename))
-    return filename
+    cmd = 'python inference_codeformer.py -w 0.7 --input_path uploads/'+filename+' --output_path outputs'
+    os.system(cmd)
+    base,ext = os.path.splitext(filename)
+    return base+'.png'
 
 
 # @app.route('/upload', methods=['POST'])
@@ -131,8 +130,8 @@ def upload_image(file, type):
         response = "data:image/" + ext_name + ";base64," + img_data
 
         # 删除图像文件
-        os.remove(image_path)
-        os.remove(os.path.join(outputs, res_filename))
+        # os.remove(image_path)
+        # os.remove(os.path.join(outputs, res_filename))
 
         return response
 
