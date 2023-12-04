@@ -13,6 +13,7 @@ from PIL import Image
 
 from flask_restful import Resource, Api
 from style_transfer import transfer
+import restore
 
 app = Flask(__name__)
 
@@ -72,6 +73,14 @@ def my_style_transfer(content_image_path, style_image_path, filename_only):
     return filename_only + '.jpg'
 
 
+def face_restore(filename):
+    inputs = app.config['UPLOAD_FOLDER']
+    outputs = app.config['OUTPUT_FOLDER']
+    RS = restore.Restore
+    RS.do(output_path=os.path.join(outputs, filename), image_path=os.path.join(inputs, filename))
+    return filename
+
+
 # @app.route('/upload', methods=['POST'])
 def upload_image(file, type):
     inputs = app.config['UPLOAD_FOLDER']
@@ -105,6 +114,8 @@ def upload_image(file, type):
             res_filename = myupscale(filename)
         elif type == 2:
             res_filename = pic2anime(filename)
+        elif type == 4:
+            res_filename = face_restore(filename)
         # 现在您可以在img中访问图像数据，img_data中包含了图像的原始二进制数据
 
         # 在这里，您可以进行图像处理或其他操作
@@ -195,7 +206,6 @@ class UploadImg(Resource):
 
 class UploadImgs(Resource):
 
-
     def post(self):
         img_files = request.files
         print(img_files)
@@ -207,7 +217,7 @@ class UploadImgs(Resource):
 
 if __name__ == '__main__':
     api = Api(app)
-    # id 1->超分辨率 2->图像转动漫 3->图像风格迁移
+    # id 1->超分辨率 2->图像转动漫 3->图像风格迁移 4->face restore
     api.add_resource(UploadImg, '/uploadImg/<int:id>')
     api.add_resource(UploadImgs, '/uploadImg/styleTransfer')
     app.run(debug=True, host="0.0.0.0", port=5000)
