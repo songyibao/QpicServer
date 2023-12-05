@@ -23,16 +23,15 @@ app.config['OUTPUT_FOLDER'] = 'outputs'
 app.config['STYLE_UPLOAD_FOLDER'] = 'style_transfer/images'
 
 
-def upscale(picPATH: List[str]) -> None:
-    config = Fin.SRCONFIG()
-    config.gpuid = 0
-    config.inputpath = picPATH  # init log percentage
-    config.tta = True
-    config.model = 'RealESRGAN-anime'
-    config.modelnoise = -1
-    # ... see README.md for more config
+def resize_image(image_path):
+    # 打开图像
+    img = Image.open(image_path)
 
-    Fin.SR_queue()
+    # 将图像调整为 512x512
+    img = img.resize((512, 512), Image.ANTIALIAS)
+
+    # 保存图像到原位置，文件名不变
+    img.save(image_path)
 
 
 def myupscale(filename):
@@ -74,10 +73,24 @@ def my_style_transfer(content_image_path, style_image_path, filename_only):
 
 
 def face_restore(filename):
-    cmd = 'python inference_codeformer.py -w 0.7 --input_path uploads/'+filename+' --output_path outputs'
+    cmd = 'python inference_codeformer.py -w 0.7 --input_path uploads/' + filename + ' --output_path outputs'
     os.system(cmd)
-    base,ext = os.path.splitext(filename)
-    return base+'.png'
+    base, ext = os.path.splitext(filename)
+    return base + '.png'
+
+
+def face_color(filename):
+    cmd = 'python inference_colorization.py --input_path uploads/' + filename + ' --output_path outputs'
+    os.system(cmd)
+    base, ext = os.path.splitext(filename)
+    return base + '.png'
+
+
+def face_inpaint(filename):
+    cmd = 'python inference_inpainting.py --input_path uploads/' + filename + ' --output_path outputs'
+    os.system(cmd)
+    base, ext = os.path.splitext(filename)
+    return base + '.png'
 
 
 # @app.route('/upload', methods=['POST'])
@@ -113,8 +126,15 @@ def upload_image(file, type):
             res_filename = myupscale(filename)
         elif type == 2:
             res_filename = pic2anime(filename)
-        elif type == 4:
+        elif type == 4:  # 人脸修复
+            resize_image(os.path.join(inputs, filename))
             res_filename = face_restore(filename)
+        elif type == 5:  # 灰度照片上色
+            resize_image(os.path.join(inputs, filename))
+            res_filename = face_color(filename)
+        elif type == 6:  # face inpaint
+            resize_image(os.path.join(inputs, filename))
+            res_filename = face_inpaint(filename)
         # 现在您可以在img中访问图像数据，img_data中包含了图像的原始二进制数据
 
         # 在这里，您可以进行图像处理或其他操作
@@ -216,7 +236,7 @@ class UploadImgs(Resource):
 
 if __name__ == '__main__':
     api = Api(app)
-    # id 1->超分辨率 2->图像转动漫 3->图像风格迁移 4->face restore
+    # id 1->超分辨率 2->图像转动漫 3->图像风格迁移 4->face restore 5->face color
     api.add_resource(UploadImg, '/uploadImg/<int:id>')
     api.add_resource(UploadImgs, '/uploadImg/styleTransfer')
     app.run(debug=True, host="0.0.0.0", port=5000)
