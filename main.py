@@ -278,4 +278,4 @@ if __name__ == '__main__':
     # id 1->超分辨率 2->图像转动漫 3->图像风格迁移 4->face restore 5->face color
     api.add_resource(UploadImg, '/uploadImg/<int:id>')
     api.add_resource(UploadImgs, '/uploadImg/styleTransfer')
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(debug=False, host="0.0.0.0", port=5000)
