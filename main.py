@@ -1,4 +1,15 @@
 # This is a sample Python script.
+from deoldify import device
+from deoldify.device_id import DeviceId
+#choices:  CPU, GPU0...GPU7
+device.set(device=DeviceId.GPU0)
+from deoldify.visualize import *
+plt.style.use('dark_background')
+torch.backends.cudnn.benchmark=True
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, message=".*?Your .*? set is empty.*?")
+
+
 import base64
 import tensorflow as tf
 import torch
@@ -15,6 +26,10 @@ from flask_restful import Resource, Api
 from style_transfer import transfer
 import inference_codeformer
 
+
+
+
+
 app = Flask(__name__)
 
 # 上传的图像文件将被保存在这个目录
@@ -22,6 +37,23 @@ app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['OUTPUT_FOLDER'] = 'outputs'
 app.config['STYLE_UPLOAD_FOLDER'] = 'style_transfer/images'
 
+def face_color(filename):
+    inputs = app.config['UPLOAD_FOLDER']
+    outputs = app.config['OUTPUT_FOLDER']
+    image_colorizer = get_image_colorizer()
+    image_path = os.path.join(inputs, filename)
+    output_image_path = os.path.join(outputs, filename)
+    # 检查文件是否为图像文件
+    if os.path.isfile(image_path) and any(
+            image_path.lower().endswith(ext) for ext in ['.png', '.jpg', '.jpeg', '.bmp', '.gif']):
+
+        result = image_colorizer.get_transformed_image(path=image_path, render_factor=35, post_process=True,
+                                                       watermarked=True)
+
+        if result is not None:
+            result.save(output_image_path, quality=95)
+            result.close()
+    return filename
 
 def resize_image(image_path):
     # 打开图像
@@ -32,6 +64,17 @@ def resize_image(image_path):
 
     # 保存图像到原位置，文件名不变
     img.save(image_path)
+
+
+def resize_gray_image(image_path):
+    # 打开图像
+    img = Image.open(image_path)
+
+    # 将图像调整为 512x512
+    img = img.resize((512, 512), Image.ANTIALIAS)
+    gray_image = img.convert("L")
+    # 保存图像到原位置，文件名不变
+    gray_image.save(image_path)
 
 
 def myupscale(filename):
@@ -79,11 +122,7 @@ def face_restore(filename):
     return base + '.png'
 
 
-def face_color(filename):
-    cmd = 'python inference_colorization.py --input_path uploads/' + filename + ' --output_path outputs'
-    os.system(cmd)
-    base, ext = os.path.splitext(filename)
-    return base + '.png'
+
 
 
 def face_inpaint(filename):
@@ -130,7 +169,7 @@ def upload_image(file, type):
             resize_image(os.path.join(inputs, filename))
             res_filename = face_restore(filename)
         elif type == 5:  # 灰度照片上色
-            resize_image(os.path.join(inputs, filename))
+            # resize_image(os.path.join(inputs, filename))
             res_filename = face_color(filename)
         elif type == 6:  # face inpaint
             resize_image(os.path.join(inputs, filename))

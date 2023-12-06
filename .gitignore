@@ -1,3 +1,10 @@
 outputs
 uploads
+inputs
+results
 .idea
+*.pth
+**/__pycache__/
+models/**
+
+style_transfer/__pycache__/__init__.cpython-39.pyc
